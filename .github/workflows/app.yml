@@ -1,71 +1,27 @@
-name: Get Data
-run-name: CMakeLists.txt
+name: Dock
+run-name: run Docker
 on: [push]
 jobs:
-  Linux:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build Tests
+      - name: Docker instalation
         run: |
-          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
-          cmake --build _build
-          cmake --build _build --target test -- ARGS=--verbose
-      - name: Generate and send a code coverage report to Coveralls
-        uses: threeal/gcovr-action@v1.0.0
-        with:
-          excludes: third-party
-          coveralls-send: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-  make_artifacts:
-    if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Build Tests
-        run: |
-          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
-          cmake --build _build
-          cmake --build _build --target test -- ARGS=--verbose
-      - name: Make CPack artifacts
-        run: |
-          cd _build
-          cpack -G "DEB"
-          cpack -G "TGZ"
-          cpack -G "RPM"
-          cd ..
+          sudo apt-get remove containerd.io
+          sudo apt install docker.io docker-compose -y
+      - name: Create image
+        run: docker build -t builder .
+      - name: Run container
+        run: docker run --name test -t builder ls
+      - name: Copy log file
+        run: docker cp test:/repo/log.txt ./log.txt
       - name: data
         uses: actions/upload-artifact@v4
         with:
-          name: data1
-          path: _build/bp-*
-  make_windows_artifacts:
-    if: startsWith( ${{ github.event.ref }} , '/refs/tags/v')
-    runs-on: windows-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: work
-        run: |
-          cmake -S D:/a/laba6/laba6 -B D:/a/laba6/laba6/_build
-          cmake --build _build
-      - name: Make CPack artifacts
-        run: |
-          cd _build
-          cpack -G "ZIP"
-          cpack -G "NSIS"
-          cd ..
-      - name: data
-        uses: actions/upload-artifact@v4
-        with:
-          name: data2
-          path: _build/bp-*
+          name: docker_artifact
+          path: /home/runner/work/laba8/laba8/log.txt
 

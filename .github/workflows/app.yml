@@ -1,0 +1,22 @@
+name: Result
+run-name: CMakeLists.txt
+on: [push]
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Get data
+        run: |
+          cmake -H. -B_build -DBUILD_TESTS=ON -DBUILD_COVERAGE=ON
+          cmake --build _build
+          cmake --build _build --target test -- ARGS=--verbose
+      - name: Coveralls
+        uses: threeal/gcovr-action@v1.0.0
+        with:
+          excludes: third-party
+          coveralls-send: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}

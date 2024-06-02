@@ -1,6 +1,7 @@
 #pragma once
 class Account {
  public:
+  friend bool operator==(const Account el1, const Account el2);
   Account(int id, int balance);
   virtual ~Account();
 
